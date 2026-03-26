@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Musikalisches Tower Defense</title>
+<style>
+body { margin:0; background:#111; overflow:hidden; }
+canvas { background:#222; display:block; margin:0 auto; }
+#info { color:#fff; font-family:sans-serif; text-align:center; position:absolute; top:10px; width:100%; }
+</style>
+</head>
+<body>
+<div id="info">Klicke Felder, um Türme zu bauen (bass/snare/hat/synth)</div>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// === Spielfeldgröße ===
+const COLS = 15, ROWS = 10, CELL = 48;
+canvas.width = COLS * CELL;
+canvas.height = ROWS * CELL;
+
+// === Karte: 0 = Boden, 1 = Pfad ===
+const map = [
+  [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
+  [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
+];
+
+// === Turmplätze ===
+const spawnSpots = [
+  {x:2,y:1}, {x:2,y:3}, {x:10,y:4}, {x:12,y:6}
+];
+
+let towers = [], enemies = [], bullets = [], spawnDelay = 0;
+
+// === Sounds laden ===
+const soundFiles = {
+  bass: 'sounds/bass.wav',
+  snare: 'sounds/snare.wav',
+  hat: 'sounds/hat.wav',
+  synth: 'sounds/synth.wav'
+};
+const sounds = {};
+for (let type in soundFiles) {
+  const audio = new Audio(soundFiles[type]);
+  audio.volume = 0.6;
+  sounds[type] = audio;
+}
+
+// === Gegnerklasse ===
+class Enemy {
+  constructor(path){
+    this.x = path[0].x;
+    this.y = path[0].y;
+    this.path = path;
+    this.step = 0;
+    this.speed = 2;
+    this.dead = false;
+  }
+  update(){
+    if(this.step < this.path.length-1){
+      const target = this.path[this.step+1];
+      const dx = target.x - this.x;
+      const dy = target.y - this.y;
+      const dist = Math.hypot(dx,dy);
+      this.x += dx/dist*this.speed;
+      this.y += dy/dist*this.speed;
+      if(Math.hypot(target.x-this.x,target.y-this.y)<2) this.step++;
+    } else this.dead = true;
+  }
+  draw(){
+    ctx.fillStyle="red";
+    ctx.fillRect(this.x-10,this.y-10,20,20);
+  }
+}
+
+// === Turmklasse ===
+class Tower {
+  constructor(x,y,type="bass"){
+    this.x = x;
+    this.y = y;
+    this.type = type;
+    this.range = 120;
+    this.rate = 60;
+    this.timer = 0;
+  }
+  update(){
+    this.timer--;
+    if(this.timer<=0){
+      for(let e of enemies){
+        const d = Math.hypot(e.x-this.x,e.y-this.y);
+        if(d<this.range){
+          bullets.push(new Bullet(this,e));
+          this.timer=this.rate;
+          if(sounds[this.type]){
+            sounds[this.type].currentTime = 0;
+            sounds[this.type].play();
+          }
+          break;
+        }
+      }
+    }
+  }
+  draw(){
+    const cols = {bass:"red", snare:"yellow", hat:"orange", synth:"cyan"};
+    ctx.fillStyle = cols[this.type] || "lime";
+    ctx.fillRect(this.x-15,this.y-15,30,30);
+    ctx.strokeStyle="rgba(255,255,255,0.3)";
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.range,0,2*Math.PI);
+    ctx.stroke();
+  }
+}
+
+// === Projektilklasse ===
+class Bullet {
+  constructor(tower,target){
+    this.x = tower.x;
+    this.y = tower.y;
+    this.target = target;
+    this.speed = 6;
+    this.hit = false;
+  }
+  update(){
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    const dist = Math.hypot(dx,dy);
+    if(dist<5){
+      this.target.dead=true;
+      this.hit=true;
+    } else {
+      this.x += dx/dist*this.speed;
+      this.y += dy/dist*this.speed;
+    }
+  }
+  draw(){
+    ctx.fillStyle="cyan";
+    ctx.fillRect(this.x-4,this.y-4,8,8);
+  }
+}
+
+// === Pfad berechnen ===
+function computePath(){
+  let path=[];
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      if(map[y][x]===1) path.push({x:x*CELL+CELL/2,y:y*CELL+CELL/2});
+    }
+  }
+  return path.sort((a,b)=>a.y-b.y);
+}
+
+// === Karte zeichnen ===
+function drawMap(){
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      ctx.fillStyle = map[y][x]===1?"#777":"#333";
+      ctx.fillRect(x*CELL,y*CELL,CELL,CELL);
+      ctx.strokeStyle="#000";
+      ctx.strokeRect(x*CELL,y*CELL,CELL,CELL);
+    }
+  }
+}
+
+// === Game Loop ===
+function gameLoop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawMap();
+  ctx.fillStyle="rgba(0,0,255,0.3)";
+  for(let s of spawnSpots) ctx.fillRect(s.x*CELL,s.y*CELL,CELL,CELL);
+
+  for(let t of towers){ t.update(); t.draw(); }
+  spawnDelay--; 
+  if(spawnDelay<=0){ enemies.push(new Enemy(computePath())); spawnDelay=90; }
+
+  enemies = enemies.filter(e=>!e.dead);
+  for(let e of enemies){ e.update(); e.draw(); }
+
+  bullets = bullets.filter(b=>!b.hit);
+  for(let b of bullets){ b.update(); b.draw(); }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// === Klick zum Turm bauen ===
+canvas.addEventListener("click",(ev)=>{
+  const mx=ev.offsetX, my=ev.offsetY;
+  for(let s of spawnSpots){
+    const px=s.x*CELL, py=s.y*CELL;
+    if(mx>=px && mx<=px+CELL && my>=py && my<=py+CELL && !s.built){
+      const type = prompt("Wähle Typ: bass/snare/hat/synth","bass");
+      towers.push(new Tower(px+CELL/2,py+CELL/2,type));
+      s.built=true;
+    }
+  }
+});
+
+// === Starte Spiel ===
+gameLoop();
+</script>
+</body>
+</html>
