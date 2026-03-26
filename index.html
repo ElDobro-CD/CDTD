@@ -43,19 +43,14 @@ const spawnSpots = [
 
 let towers = [], enemies = [], bullets = [], spawnDelay = 0;
 
-// === Sounds laden ===
-const soundFiles = {
-  bass: 'sounds/bass.wav',
-  snare: 'sounds/snare.wav',
-  hat: 'sounds/hat.wav',
-  synth: 'sounds/synth.wav'
+// === Sounds als Base64 ===
+const sounds = {
+  bass: new Audio("data:audio/wav;base64,UklGRqQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YUQAAACAgICAgICAgICAgICAgICAgICAgICA="),
+  snare: new Audio("data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YdQAAACAgICAfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8="),
+  hat: new Audio("data:audio/wav;base64,UklGRuQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YcoAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC"),
+  synth: new Audio("data:audio/wav;base64,UklGRrQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YYQAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAg")
 };
-const sounds = {};
-for (let type in soundFiles) {
-  const audio = new Audio(soundFiles[type]);
-  audio.volume = 0.6;
-  sounds[type] = audio;
-}
+for(let k in sounds) sounds[k].volume = 0.6;
 
 // === Gegnerklasse ===
 class Enemy {
