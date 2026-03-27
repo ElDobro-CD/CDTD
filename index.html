@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Karten Spiel</title>
+  <title>Kastenholz Spiel</title>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -37,18 +37,13 @@
       margin: 10px;
       border-radius: 10px;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 16px;
     }
 
     #gameOverImage img {
       width: 300px;
+      margin-top: 20px;
       border-radius: 10px;
-      animation: fadeIn 1s ease-in;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
@@ -68,6 +63,7 @@
 </div>
 
 <p id="message"></p>
+
 <div id="gameOverImage"></div>
 
 <button onclick="restartGame()">Neustart</button>
@@ -78,12 +74,12 @@
   <ul id="scoreList"></ul>
 </div>
 
-<!-- YouTube Musik (unsichtbar) -->
+<!-- YouTube Musik -->
 <iframe id="ytplayer" width="0" height="0" allow="autoplay"></iframe>
 
 <script>
 
-/* 🔥 Deine Firebase Config */
+/* 🔥 Firebase Config */
 const firebaseConfig = {
   apiKey: "AIzaSyClja3st19oZ-aDcXzah4GZ_pCpfPfzWiQ",
   authDomain: "kastenholzspiel.firebaseapp.com",
@@ -101,7 +97,7 @@ let score = 0;
 let gameOver = false;
 let playerName = "";
 
-/* Start */
+/* ▶️ Start */
 function startGame() {
   playerName = document.getElementById("playerName").value;
 
@@ -110,26 +106,28 @@ function startGame() {
     return;
   }
 
-  // 🎶 Musik starten
+  // 🎵 Musik starten
   document.getElementById("ytplayer").src =
     "https://www.youtube.com/embed/jQwNlcCwf9Y?autoplay=1&loop=1&playlist=jQwNlcCwf9Y";
 
   initRound();
 }
 
-/* Runde */
+/* Runde starten */
 function initRound() {
   cards = [true, false];
   shuffle(cards);
 
   document.getElementById("card0").textContent = "Verdeckt";
   document.getElementById("card1").textContent = "Verdeckt";
+
   document.getElementById("message").textContent = "";
   document.getElementById("gameOverImage").innerHTML = "";
 
   gameOver = false;
 }
 
+/* Shuffle */
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -151,7 +149,7 @@ function drawCard(index) {
     score++;
     document.getElementById("score").textContent = "Score: " + score;
 
-    setTimeout(initRound, 800);
+    setTimeout(initRound, 700);
 
   } else {
     cardEl.textContent = "Keine Kastenholz";
@@ -160,10 +158,11 @@ function drawCard(index) {
     gameOver = true;
     document.getElementById("message").textContent = "Spiel vorbei!";
 
-    document.getElementById("gameOverImage").innerHTML = `
-      <img src="https://i.imgur.com/4AiXzf8.jpg">
-    `;
+    // 🖼️ Bild anzeigen (Facebook Link)
+    document.getElementById("gameOverImage").innerHTML =
+      `<img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg">`;
 
+    // 💾 Score speichern
     db.collection("scores").add({
       name: playerName,
       score: score,
@@ -194,10 +193,12 @@ function loadLeaderboard() {
 function restartGame() {
   score = 0;
   document.getElementById("score").textContent = "Score: 0";
+  document.getElementById("message").textContent = "";
+  document.getElementById("gameOverImage").innerHTML = "";
   initRound();
 }
 
-/* Auto Load Leaderboard */
+/* Init */
 window.onload = function() {
   loadLeaderboard();
 };
