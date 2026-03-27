@@ -1,50 +1,49 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Kastenholz ode kein Holz</title>
+<meta charset="UTF-8">
+<title>Kastenholz Spiel</title>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      background: #f4f4f4;
-    }
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: #f4f4f4;
+}
 
-    #scoreboard {
-      position: absolute;
-      left: 20px;
-      top: 100px;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      min-width: 180px;
-      text-align: left;
-    }
+#scoreboard {
+  position: absolute;
+  left: 20px;
+  top: 100px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  min-width: 180px;
+  text-align: left;
+}
 
-    .card {
-      width: 120px;
-      height: 160px;
-      background: #333;
-      color: white;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin: 10px;
-      border-radius: 10px;
-      cursor: pointer;
-    }
+.card {
+  width: 120px;
+  height: 160px;
+  background: #333;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
 
-    #gameOverImage img {
-      width: 300px;
-      margin-top: 20px;
-      border-radius: 10px;
-    }
-  </style>
+#gameOverImage img {
+  width: 300px;
+  margin-top: 20px;
+  border-radius: 10px;
+}
+</style>
 </head>
 
 <body>
@@ -55,6 +54,7 @@
 <button onclick="startGame()">Start</button>
 
 <h2 id="score">Score: 0</h2>
+<h3 id="streak">Streak: 0 / 10</h3>
 
 <div>
   <div class="card" onclick="drawCard(0)" id="card0">Karte</div>
@@ -67,18 +67,17 @@
 
 <button onclick="restartGame()">Neustart</button>
 
-<!-- Scoreboard -->
 <div id="scoreboard">
   <h3>Top 10</h3>
   <ul id="scoreList"></ul>
 </div>
 
-<!-- YouTube (optional, kann blockiert sein) -->
+<!-- 🎵 YouTube Player -->
 <iframe id="ytplayer" width="0" height="0" allow="autoplay"></iframe>
 
 <script>
 
-/* 🔥 Firebase Config */
+/* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyClja3st19oZ-aDcXzah4GZ_pCpfPfzWiQ",
   authDomain: "kastenholzspiel.firebaseapp.com",
@@ -94,6 +93,7 @@ const db = firebase.firestore();
 /* Variablen */
 let cards = [];
 let score = 0;
+let streak = 0;
 let gameOver = false;
 let playerName = "";
 
@@ -106,10 +106,13 @@ function startGame() {
     return;
   }
 
-  // Musik (optional)
+  // 🎵 YouTube Musik starten (nach Klick erlaubt)
   document.getElementById("ytplayer").src =
     "https://www.youtube.com/embed/jQwNlcCwf9Y?autoplay=1&loop=1&playlist=jQwNlcCwf9Y";
 
+  score = 0;
+  streak = 0;
+  updateUI();
   initRound();
 }
 
@@ -127,6 +130,7 @@ function initRound() {
   gameOver = false;
 }
 
+/* Shuffle */
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -146,28 +150,61 @@ function drawCard(index) {
     cardEl.style.background = "green";
 
     score++;
-    document.getElementById("score").textContent = "Score: " + score;
+    streak++;
 
-    setTimeout(initRound, 600);
+    updateUI();
+
+    if (streak >= 10) {
+      winGame();
+      return;
+    }
+
+    setTimeout(initRound, 500);
 
   } else {
     cardEl.textContent = "Keine Kastenholz";
     cardEl.style.background = "red";
 
     gameOver = true;
+    streak = 0;
+
     document.getElementById("message").textContent = "Spiel vorbei!";
 
-    // 🖼️ Bild anzeigen (funktionierend, extern gehostet)
     document.getElementById("gameOverImage").innerHTML =
-      `<img src="https://i.imgur.com/4AiXzf8.jpg">`;
+      `<img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg">`;
 
-    // Score speichern
-    db.collection("scores").add({
-      name: playerName,
-      score: score,
-      timestamp: Date.now()
-    });
+    saveScore();
   }
+
+  updateUI();
+}
+
+/* UI */
+function updateUI() {
+  document.getElementById("score").textContent = "Score: " + score;
+  document.getElementById("streak").textContent = "Streak: " + streak + " / 10";
+}
+
+/* Win */
+function winGame() {
+  gameOver = true;
+
+  document.getElementById("message").textContent =
+    "🎉 GEWONNEN! 10/10 geschafft – du darfst einen 10er im Casino einzahlen 😎";
+
+  document.getElementById("gameOverImage").innerHTML =
+    `<img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg">`;
+
+  saveScore();
+}
+
+/* Score speichern */
+function saveScore() {
+  db.collection("scores").add({
+    name: playerName,
+    score: score,
+    timestamp: Date.now()
+  });
 }
 
 /* Leaderboard */
@@ -191,9 +228,13 @@ function loadLeaderboard() {
 /* Neustart */
 function restartGame() {
   score = 0;
-  document.getElementById("score").textContent = "Score: 0";
+  streak = 0;
+  gameOver = false;
+
   document.getElementById("message").textContent = "";
   document.getElementById("gameOverImage").innerHTML = "";
+
+  updateUI();
   initRound();
 }
 
