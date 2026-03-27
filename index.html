@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Karten Spiel</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -57,7 +58,24 @@
       cursor: pointer;
     }
 
-    /* 🎯 Bild zentriert + Animation */
+    /* Startscreen */
+    #startScreen {
+      margin-top: 50px;
+    }
+
+    /* Scoreboard links */
+    #scoreboard {
+      position: absolute;
+      left: 20px;
+      top: 100px;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: left;
+      min-width: 150px;
+    }
+
+    /* Game Over Bild */
     #gameOverImage {
       margin-top: 30px;
       display: flex;
@@ -67,7 +85,6 @@
     #gameOverImage img {
       width: 300px;
       border-radius: 10px;
-
       opacity: 0;
       animation: fadeIn 1s forwards;
     }
@@ -84,27 +101,71 @@
     }
   </style>
 </head>
+
 <body>
 
   <h1>Karten Spiel</h1>
-  <div id="score">Score: 0</div>
 
-  <div class="cards">
-    <div class="card" onclick="drawCard(0)">Karte 1</div>
-    <div class="card" onclick="drawCard(1)">Karte 2</div>
+  <!-- Startscreen -->
+  <div id="startScreen">
+    <h2>Spiel starten</h2>
+    <input type="text" id="playerName" placeholder="Dein Name">
+    <button onclick="startGame()">Start</button>
   </div>
 
-  <div id="message"></div>
+  <!-- Spielbereich -->
+  <div id="gameArea" style="display:none;">
 
-  <!-- Bild Container -->
-  <div id="gameOverImage"></div>
+    <div id="score">Score: 0</div>
 
-  <button onclick="restartGame()">Neustart</button>
+    <div class="cards">
+      <div class="card" onclick="drawCard(0)">Karte 1</div>
+      <div class="card" onclick="drawCard(1)">Karte 2</div>
+    </div>
+
+    <div id="message"></div>
+
+    <div id="gameOverImage"></div>
+
+    <button onclick="restartGame()">Neustart</button>
+
+  </div>
+
+  <!-- Scoreboard -->
+  <div id="scoreboard">
+    <h3>Scoreboard</h3>
+    <ul id="scoreList"></ul>
+  </div>
+
+  <!-- YouTube Musik -->
+  <iframe
+    width="0"
+    height="0"
+    src="https://www.youtube.com/embed/qgTRjgU8k1Q?autoplay=1&mute=1&loop=1&playlist=qgTRjgU8k1Q"
+    frameborder="0"
+    allow="autoplay">
+  </iframe>
 
   <script>
     let cards = [];
     let score = 0;
     let gameOver = false;
+    let playerName = "";
+    let leaderboard = [];
+
+    function startGame() {
+      playerName = document.getElementById("playerName").value;
+
+      if (!playerName) {
+        alert("Bitte Namen eingeben!");
+        return;
+      }
+
+      document.getElementById("startScreen").style.display = "none";
+      document.getElementById("gameArea").style.display = "block";
+
+      initRound();
+    }
 
     function initRound() {
       cards = [];
@@ -156,11 +217,14 @@
 
         document.getElementById("message").textContent = "Spiel vorbei!";
 
-        // 🎯 Bild anzeigen
+        // Bild anzeigen
         document.getElementById("gameOverImage").innerHTML = `
-          <img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=53a332&_nc_ohc=BmDn1YqOs80Q7kNvwGvo2xw&_nc_oc=Adp7EYtDkGaqv-3wEpmHYIg0DYnVIegNxHelOPkc8_xboYg1juLkcU_LK8JmhRYKvu7gZwf4ypha-ztZvu0OBykW&_nc_zt=23&_nc_ht=scontent-dus1-1.xx&_nc_gid=fLwPDxR91eGLdSQstnsOfg&_nc_ss=7a30f&oh=00_AfyeQvWcVJ0khYcAOam5MSvHo25QG_N4gXCs-BeeDgPP1A&oe=69CC9433" 
-          alt="Game Over">
+          <img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=53a332&_nc_ohc=BmDn1YqOs80Q7kNvwGvo2xw&_nc_oc=Adp7EYtDkGaqv-3wEpmHYIg0DYnVIegNxHelOPkc8_xboYg1juLkcU_LK8JmhRYKvu7gZwf4ypha-ztZvu0OBykW&_nc_zt=23&_nc_ht=scontent-dus1-1.xx&_nc_gid=fLwPDxR91eGLdSQstnsOfg&_nc_ss=7a30f&oh=00_AfyeQvWcVJ0khYcAOam5MSvHo25QG_N4gXCs-BeeDgPP1A&oe=69CC9433">
         `;
+
+        // Score speichern
+        leaderboard.push({ name: playerName, score: score });
+        updateScoreboard();
       }
     }
 
@@ -168,18 +232,29 @@
       document.getElementById("score").textContent = "Score: " + score;
     }
 
+    function updateScoreboard() {
+      const list = document.getElementById("scoreList");
+      list.innerHTML = "";
+
+      leaderboard.sort((a, b) => b.score - a.score);
+
+      leaderboard.forEach(player => {
+        const li = document.createElement("li");
+        li.textContent = player.name + ": " + player.score;
+        list.appendChild(li);
+      });
+    }
+
     function restartGame() {
       score = 0;
       gameOver = false;
-      updateScore();
 
       document.getElementById("gameOverImage").innerHTML = "";
       document.getElementById("message").textContent = "";
 
+      updateScore();
       initRound();
     }
-
-    initRound();
   </script>
 
 </body>
