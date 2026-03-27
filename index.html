@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Kastenholz Spiel</title>
+  <title>Kastenholz ode kein Holz</title>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -37,7 +37,6 @@
       margin: 10px;
       border-radius: 10px;
       cursor: pointer;
-      font-size: 16px;
     }
 
     #gameOverImage img {
@@ -74,7 +73,7 @@
   <ul id="scoreList"></ul>
 </div>
 
-<!-- YouTube Musik -->
+<!-- YouTube (optional, kann blockiert sein) -->
 <iframe id="ytplayer" width="0" height="0" allow="autoplay"></iframe>
 
 <script>
@@ -92,12 +91,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+/* Variablen */
 let cards = [];
 let score = 0;
 let gameOver = false;
 let playerName = "";
 
-/* ▶️ Start */
+/* Start */
 function startGame() {
   playerName = document.getElementById("playerName").value;
 
@@ -106,14 +106,14 @@ function startGame() {
     return;
   }
 
-  // 🎵 Musik starten
+  // Musik (optional)
   document.getElementById("ytplayer").src =
     "https://www.youtube.com/embed/jQwNlcCwf9Y?autoplay=1&loop=1&playlist=jQwNlcCwf9Y";
 
   initRound();
 }
 
-/* Runde starten */
+/* Runde */
 function initRound() {
   cards = [true, false];
   shuffle(cards);
@@ -127,7 +127,6 @@ function initRound() {
   gameOver = false;
 }
 
-/* Shuffle */
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -149,7 +148,7 @@ function drawCard(index) {
     score++;
     document.getElementById("score").textContent = "Score: " + score;
 
-    setTimeout(initRound, 700);
+    setTimeout(initRound, 600);
 
   } else {
     cardEl.textContent = "Keine Kastenholz";
@@ -158,11 +157,11 @@ function drawCard(index) {
     gameOver = true;
     document.getElementById("message").textContent = "Spiel vorbei!";
 
-    // 🖼️ Bild anzeigen (Facebook Link)
+    // 🖼️ Bild anzeigen (funktionierend, extern gehostet)
     document.getElementById("gameOverImage").innerHTML =
-      `<img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg">`;
+      `<img src="https://i.imgur.com/4AiXzf8.jpg">`;
 
-    // 💾 Score speichern
+    // Score speichern
     db.collection("scores").add({
       name: playerName,
       score: score,
