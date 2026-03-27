@@ -36,11 +36,15 @@ body {
   margin: 10px;
   border-radius: 10px;
   cursor: pointer;
+  user-select: none;
+}
+
+#gameOverImage {
+  margin-top: 20px;
 }
 
 #gameOverImage img {
   width: 300px;
-  margin-top: 20px;
   border-radius: 10px;
 }
 </style>
@@ -72,7 +76,7 @@ body {
   <ul id="scoreList"></ul>
 </div>
 
-<!-- 🎵 YouTube Player -->
+<!-- YouTube -->
 <iframe id="ytplayer" width="0" height="0" allow="autoplay"></iframe>
 
 <script>
@@ -90,7 +94,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* Variablen */
+/* State */
 let cards = [];
 let score = 0;
 let streak = 0;
@@ -106,14 +110,25 @@ function startGame() {
     return;
   }
 
-  // 🎵 YouTube Musik starten (nach Klick erlaubt)
+  // Musik starten
   document.getElementById("ytplayer").src =
     "https://www.youtube.com/embed/jQwNlcCwf9Y?autoplay=1&loop=1&playlist=jQwNlcCwf9Y";
 
   score = 0;
   streak = 0;
+  gameOver = false;
+
   updateUI();
+  resetCards();
   initRound();
+}
+
+/* Karten reset */
+function resetCards() {
+  document.getElementById("card0").style.background = "#333";
+  document.getElementById("card1").style.background = "#333";
+  document.getElementById("card0").textContent = "Karte";
+  document.getElementById("card1").textContent = "Karte";
 }
 
 /* Runde */
@@ -121,13 +136,8 @@ function initRound() {
   cards = [true, false];
   shuffle(cards);
 
-  document.getElementById("card0").textContent = "Verdeckt";
-  document.getElementById("card1").textContent = "Verdeckt";
-
   document.getElementById("message").textContent = "";
   document.getElementById("gameOverImage").innerHTML = "";
-
-  gameOver = false;
 }
 
 /* Shuffle */
@@ -138,7 +148,7 @@ function shuffle(array) {
   }
 }
 
-/* Karte ziehen */
+/* Karte */
 function drawCard(index) {
   if (gameOver) return;
 
@@ -159,7 +169,10 @@ function drawCard(index) {
       return;
     }
 
-    setTimeout(initRound, 500);
+    setTimeout(() => {
+      resetCards();
+      initRound();
+    }, 600);
 
   } else {
     cardEl.textContent = "Keine Kastenholz";
@@ -170,8 +183,11 @@ function drawCard(index) {
 
     document.getElementById("message").textContent = "Spiel vorbei!";
 
+    // Bild anzeigen (immer sichtbar + fallback)
+    const imgUrl = "https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg";
+
     document.getElementById("gameOverImage").innerHTML =
-      `<img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg">`;
+      `<img src="${imgUrl}" onerror="this.style.display='none'">`;
 
     saveScore();
   }
@@ -190,10 +206,12 @@ function winGame() {
   gameOver = true;
 
   document.getElementById("message").textContent =
-    "🎉 GEWONNEN! 10/10 geschafft – du darfst einen 10er im Casino einzahlen 😎";
+    "🎉 GEWONNEN! Du darfst einen 10er im Casino einzahlen 😎";
+
+  const imgUrl = "https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg";
 
   document.getElementById("gameOverImage").innerHTML =
-    `<img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg">`;
+    `<img src="${imgUrl}" onerror="this.style.display='none'">`;
 
   saveScore();
 }
@@ -225,7 +243,7 @@ function loadLeaderboard() {
     });
 }
 
-/* Neustart */
+/* Neustart FIX */
 function restartGame() {
   score = 0;
   streak = 0;
@@ -234,6 +252,7 @@ function restartGame() {
   document.getElementById("message").textContent = "";
   document.getElementById("gameOverImage").innerHTML = "";
 
+  resetCards();
   updateUI();
   initRound();
 }
