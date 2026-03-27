@@ -11,18 +11,40 @@
 body {
   font-family: Arial;
   text-align: center;
-  background: #f4f4f4;
+
+  /* 🌄 Hintergrundbild */
+  background-image: url("https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=53a332&_nc_ohc=BmDn1YqOs80Q7kNvwGvo2xw&_nc_oc=Adp7EYtDkGaqv-3wEpmHYIg0DYnVIegNxHelOPkc8_xboYg1juLkcU_LK8JmhRYKvu7gZwf4ypha-ztZvu0OBykW&_nc_zt=23&_nc_ht=scontent-dus1-1.xx&_nc_gid=fLwPDxR91eGLdSQstnsOfg&_nc_ss=7a30f&oh=00_AfyeQvWcVJ0khYcAOam5MSvHo25QG_N4gXCs-BeeDgPP1A&oe=69CC9433");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* Overlay für bessere Lesbarkeit */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: -1;
+}
+
+h1, h2, h3, p, input, button {
+  color: white;
 }
 
 #scoreboard {
   position: absolute;
   left: 20px;
   top: 100px;
-  background: white;
+  background: rgba(255,255,255,0.9);
   padding: 15px;
   border-radius: 10px;
   min-width: 180px;
   text-align: left;
+  color: black;
 }
 
 .card {
@@ -39,12 +61,9 @@ body {
   user-select: none;
 }
 
-#gameOverImage {
-  margin-top: 20px;
-}
-
 #gameOverImage img {
   width: 300px;
+  margin-top: 20px;
   border-radius: 10px;
 }
 </style>
@@ -76,7 +95,7 @@ body {
   <ul id="scoreList"></ul>
 </div>
 
-<!-- YouTube -->
+<!-- YouTube Musik -->
 <iframe id="ytplayer" width="0" height="0" allow="autoplay"></iframe>
 
 <script>
@@ -110,7 +129,7 @@ function startGame() {
     return;
   }
 
-  // Musik starten
+  // 🎵 Musik starten
   document.getElementById("ytplayer").src =
     "https://www.youtube.com/embed/jQwNlcCwf9Y?autoplay=1&loop=1&playlist=jQwNlcCwf9Y";
 
@@ -148,7 +167,7 @@ function shuffle(array) {
   }
 }
 
-/* Karte */
+/* Karte ziehen */
 function drawCard(index) {
   if (gameOver) return;
 
@@ -183,7 +202,6 @@ function drawCard(index) {
 
     document.getElementById("message").textContent = "Spiel vorbei!";
 
-    // Bild anzeigen (immer sichtbar + fallback)
     const imgUrl = "https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg";
 
     document.getElementById("gameOverImage").innerHTML =
@@ -243,7 +261,7 @@ function loadLeaderboard() {
     });
 }
 
-/* Neustart FIX */
+/* Neustart */
 function restartGame() {
   score = 0;
   streak = 0;
