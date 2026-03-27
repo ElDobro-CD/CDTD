@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Karten Spiel</title>
+  <meta charset="UTF-8">
+  <title>Kastenholz Spiel</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       text-align: center;
       background: #f4f4f4;
     }
@@ -15,9 +19,15 @@
       margin-top: 20px;
     }
 
-    #score {
-      font-size: 20px;
-      margin: 10px;
+    #scoreboard {
+      position: absolute;
+      left: 20px;
+      top: 100px;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      min-width: 180px;
+      text-align: left;
     }
 
     .cards {
@@ -35,227 +45,196 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      cursor: pointer;
       border-radius: 10px;
-      transition: 0.3s;
-    }
-
-    .card:hover {
-      transform: scale(1.05);
-    }
-
-    #message {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
       cursor: pointer;
-    }
-
-    #startScreen {
-      margin-top: 50px;
-    }
-
-    #scoreboard {
-      position: absolute;
-      left: 20px;
-      top: 100px;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: left;
-      min-width: 150px;
-    }
-
-    #gameOverImage {
-      margin-top: 30px;
-      display: flex;
-      justify-content: center;
     }
 
     #gameOverImage img {
       width: 300px;
       border-radius: 10px;
-      opacity: 0;
-      animation: fadeIn 1s forwards;
+      animation: fadeIn 1s ease-in;
     }
 
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: scale(0.9);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    #startScreen {
+      margin-top: 50px;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>Karten Spiel</h1>
+<h1>Kastenholz Spiel</h1>
 
-  <!-- Startscreen -->
-  <div id="startScreen">
-    <h2>Spiel starten</h2>
-    <input type="text" id="playerName" placeholder="Dein Name">
-    <button onclick="startGame()">Start</button>
+<!-- Start -->
+<div id="startScreen">
+  <input id="playerName" placeholder="Dein Name">
+  <button onclick="startGame()">Start</button>
+</div>
+
+<!-- Spiel -->
+<div id="gameArea" style="display:none;">
+  <div id="score">Score: 0</div>
+
+  <div class="cards">
+    <div class="card" onclick="drawCard(0)">Karte 1</div>
+    <div class="card" onclick="drawCard(1)">Karte 2</div>
   </div>
 
-  <!-- Spielbereich -->
-  <div id="gameArea" style="display:none;">
+  <div id="message"></div>
 
-    <div id="score">Score: 0</div>
+  <div id="gameOverImage"></div>
 
-    <div class="cards">
-      <div class="card" onclick="drawCard(0)">Karte 1</div>
-      <div class="card" onclick="drawCard(1)">Karte 2</div>
-    </div>
+  <button onclick="restartGame()">Neustart</button>
+</div>
 
-    <div id="message"></div>
+<!-- Scoreboard -->
+<div id="scoreboard">
+  <h3>Top 10</h3>
+  <ul id="scoreList"></ul>
+</div>
 
-    <div id="gameOverImage"></div>
+<!-- YouTube Musik -->
+<iframe
+  id="ytplayer"
+  width="0"
+  height="0"
+  src=""
+  allow="autoplay">
+</iframe>
 
-    <button onclick="restartGame()">Neustart</button>
+<script>
+/* 🔥 Firebase Config */
+const firebaseConfig = {
+  apiKey: "DEIN_API_KEY",
+  authDomain: "DEIN_PROJECT.firebaseapp.com",
+  projectId: "DEIN_PROJECT_ID",
+  storageBucket: "DEIN_BUCKET",
+  messagingSenderId: "DEIN_ID",
+  appId: "DEIN_APP_ID"
+};
 
-  </div>
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  <!-- Scoreboard -->
-  <div id="scoreboard">
-    <h3>Scoreboard</h3>
-    <ul id="scoreList"></ul>
-  </div>
+/* Variablen */
+let cards = [];
+let score = 0;
+let gameOver = false;
+let playerName = "";
 
-  <!-- YouTube Player (wird erst beim Start geladen) -->
-  <iframe
-    id="ytplayer"
-    width="0"
-    height="0"
-    src=""
-    frameborder="0"
-    allow="autoplay">
-  </iframe>
+/* Start */
+function startGame() {
+  playerName = document.getElementById("playerName").value;
 
-  <script>
-    let cards = [];
-    let score = 0;
-    let gameOver = false;
-    let playerName = "";
-    let leaderboard = [];
+  if (!playerName) {
+    alert("Bitte Namen eingeben!");
+    return;
+  }
 
-    function startGame() {
-      playerName = document.getElementById("playerName").value;
+  // 🎵 Musik starten
+  document.getElementById("ytplayer").src =
+    "https://www.youtube.com/embed/qgTRjgU8k1Q?autoplay=1&loop=1&playlist=qgTRjgU8k1Q";
 
-      if (!playerName) {
-        alert("Bitte Namen eingeben!");
-        return;
-      }
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("gameArea").style.display = "block";
 
-      // 🎵 Sound starten NACH Klick
-      document.getElementById("ytplayer").src =
-        "https://www.youtube.com/embed/qgTRjgU8k1Q?autoplay=1&loop=1&playlist=qgTRjgU8k1Q";
+  loadLeaderboard();
+  initRound();
+}
 
-      document.getElementById("startScreen").style.display = "none";
-      document.getElementById("gameArea").style.display = "block";
+/* Karten */
+function initRound() {
+  cards = [true, false];
+  shuffle(cards);
+  renderCards();
+}
 
-      initRound();
-    }
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
 
-    function initRound() {
-      cards = [];
-      cards.push(true);
-      cards.push(false);
-      shuffle(cards);
-      renderCards();
-    }
+function renderCards() {
+  document.querySelectorAll(".card").forEach(c => {
+    c.textContent = "Verdeckt";
+    c.style.background = "#333";
+  });
+  document.getElementById("message").textContent = "";
+}
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
+/* Klick auf Karte */
+function drawCard(index) {
+  if (gameOver) return;
 
-    function renderCards() {
-      const cardElements = document.querySelectorAll('.card');
-      cardElements.forEach((el) => {
-        el.textContent = "Verdeckt";
-        el.style.background = "#333";
-      });
+  const isKastenholz = cards[index];
+  const card = document.querySelectorAll(".card")[index];
 
-      document.getElementById("message").textContent = "";
-    }
+  if (isKastenholz) {
+    card.textContent = "Kastenholz";
+    card.style.background = "green";
 
-    function drawCard(index) {
-      if (gameOver) return;
+    score++;
+    document.getElementById("score").textContent = "Score: " + score;
 
-      const isKastenholz = cards[index];
-      const cardElements = document.querySelectorAll('.card');
+    setTimeout(initRound, 800);
 
-      if (isKastenholz) {
-        cardElements[index].textContent = "Kastenholz";
-        cardElements[index].style.background = "green";
+  } else {
+    card.textContent = "Keine Kastenholz";
+    card.style.background = "red";
 
-        score++;
-        updateScore();
+    gameOver = true;
+    document.getElementById("message").textContent = "Spiel vorbei!";
 
-        setTimeout(() => {
-          initRound();
-        }, 800);
+    // 🖼️ Bild anzeigen
+    document.getElementById("gameOverImage").innerHTML = `
+      <img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg">
+    `;
 
-      } else {
-        cardElements[index].textContent = "Keine Kastenholz";
-        cardElements[index].style.background = "red";
+    // 💾 Score speichern
+    db.collection("scores").add({
+      name: playerName,
+      score: score,
+      timestamp: Date.now()
+    });
 
-        gameOver = true;
-        document.getElementById("message").textContent = "Spiel vorbei!";
+    loadLeaderboard();
+  }
+}
 
-        // Bild anzeigen
-        document.getElementById("gameOverImage").innerHTML = `
-          <img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg">
-        `;
-
-        leaderboard.push({ name: playerName, score: score });
-        updateScoreboard();
-      }
-    }
-
-    function updateScore() {
-      document.getElementById("score").textContent = "Score: " + score;
-    }
-
-    function updateScoreboard() {
+/* Leaderboard Top 10 */
+function loadLeaderboard() {
+  db.collection("scores")
+    .orderBy("score", "desc")
+    .limit(10)
+    .onSnapshot(snapshot => {
       const list = document.getElementById("scoreList");
       list.innerHTML = "";
 
-      leaderboard.sort((a, b) => b.score - a.score);
-
-      leaderboard.forEach(player => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
         const li = document.createElement("li");
-        li.textContent = player.name + ": " + player.score;
+        li.textContent = data.name + ": " + data.score;
         list.appendChild(li);
       });
-    }
+    });
+}
 
-    function restartGame() {
-      score = 0;
-      gameOver = false;
-
-      document.getElementById("gameOverImage").innerHTML = "";
-      document.getElementById("message").textContent = "";
-
-      updateScore();
-      initRound();
-    }
-  </script>
+/* Neustart */
+function restartGame() {
+  score = 0;
+  gameOver = false;
+  document.getElementById("score").textContent = "Score: 0";
+  document.getElementById("gameOverImage").innerHTML = "";
+  initRound();
+}
+</script>
 
 </body>
 </html>
