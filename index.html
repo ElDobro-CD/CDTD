@@ -9,19 +9,23 @@
       text-align: center;
       background: #f4f4f4;
     }
+
     h1 {
       margin-top: 20px;
     }
+
     #score {
       font-size: 20px;
       margin: 10px;
     }
+
     .cards {
       display: flex;
       justify-content: center;
       gap: 20px;
       margin-top: 40px;
     }
+
     .card {
       width: 120px;
       height: 160px;
@@ -35,19 +39,48 @@
       border-radius: 10px;
       transition: 0.3s;
     }
+
     .card:hover {
       transform: scale(1.05);
     }
+
     #message {
       margin-top: 20px;
       font-size: 18px;
       font-weight: bold;
     }
+
     button {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
+    }
+
+    /* 🎯 Bild zentriert + Animation */
+    #gameOverImage {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+    }
+
+    #gameOverImage img {
+      width: 300px;
+      border-radius: 10px;
+
+      opacity: 0;
+      animation: fadeIn 1s forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
   </style>
 </head>
@@ -63,6 +96,9 @@
 
   <div id="message"></div>
 
+  <!-- Bild Container -->
+  <div id="gameOverImage"></div>
+
   <button onclick="restartGame()">Neustart</button>
 
   <script>
@@ -72,7 +108,6 @@
 
     function initRound() {
       cards = [];
-      // eine Kastenholz Karte (true) und eine normale (false)
       cards.push(true);
       cards.push(false);
       shuffle(cards);
@@ -88,10 +123,11 @@
 
     function renderCards() {
       const cardElements = document.querySelectorAll('.card');
-      cardElements.forEach((el, index) => {
+      cardElements.forEach((el) => {
         el.textContent = "Verdeckt";
         el.style.background = "#333";
       });
+
       document.getElementById("message").textContent = "";
     }
 
@@ -104,16 +140,27 @@
       if (isKastenholz) {
         cardElements[index].textContent = "Kastenholz";
         cardElements[index].style.background = "green";
+
         score++;
         updateScore();
+
         setTimeout(() => {
           initRound();
         }, 800);
+
       } else {
         cardElements[index].textContent = "Keine Kastenholz";
         cardElements[index].style.background = "red";
+
         gameOver = true;
+
         document.getElementById("message").textContent = "Spiel vorbei!";
+
+        // 🎯 Bild anzeigen
+        document.getElementById("gameOverImage").innerHTML = `
+          <img src="https://scontent-dus1-1.xx.fbcdn.net/v/t39.30808-6/506793581_9927618853952341_4533149551032068414_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=53a332&_nc_ohc=BmDn1YqOs80Q7kNvwGvo2xw&_nc_oc=Adp7EYtDkGaqv-3wEpmHYIg0DYnVIegNxHelOPkc8_xboYg1juLkcU_LK8JmhRYKvu7gZwf4ypha-ztZvu0OBykW&_nc_zt=23&_nc_ht=scontent-dus1-1.xx&_nc_gid=fLwPDxR91eGLdSQstnsOfg&_nc_ss=7a30f&oh=00_AfyeQvWcVJ0khYcAOam5MSvHo25QG_N4gXCs-BeeDgPP1A&oe=69CC9433" 
+          alt="Game Over">
+        `;
       }
     }
 
@@ -125,10 +172,13 @@
       score = 0;
       gameOver = false;
       updateScore();
+
+      document.getElementById("gameOverImage").innerHTML = "";
+      document.getElementById("message").textContent = "";
+
       initRound();
     }
 
-    // Start game
     initRound();
   </script>
 
